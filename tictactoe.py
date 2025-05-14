@@ -138,8 +138,8 @@ def minimax(board):
     # X plays max, O plays min
 
     # temp
-    if board == initial_state():
-        return (0,1)
+    # if board == initial_state():
+    #     return (0,1)
 
     # init variables
     scores = []
