@@ -61,10 +61,10 @@ def result(board, action):
     b = copy.deepcopy(board)
     
     # Catch Illegal Move
-    if b[action[0], action[1]] != EMPTY:
+    if b[action[0]][action[1]] != EMPTY:
         raise Exception('Illegal Move')
     
-    b[action[0], action[1]] = player(board)
+    b[action[0]][action[1]] = player(board)
     return b
 
 
@@ -79,15 +79,15 @@ def winner(board):
         if all(board[i][j] == X for j in range(3)) or \
             all(board[j][i] == X for j in range(3)) or \
             all(board[j][j] == X for j in range(3)) or \
-            all(board[i][2-j] == X for j in range(3)):
+            all(board[j][2-j] == X for j in range(3)):
             return X
         elif all(board[i][j] == O for j in range(3)) or \
             all(board[j][i] == O for j in range(3)) or \
             all(board[j][j] == O for j in range(3)) or \
-            all(board[i][2-j] == O for j in range(3)):
+            all(board[j][2-j] == O for j in range(3)):
             return O
-        else:
-            return None
+    
+    return None
 
 
 def terminal(board):
@@ -102,8 +102,8 @@ def terminal(board):
             all(board[j][i] == O for j in range(3)) or \
             all(board[j][j] == X for j in range(3)) or \
             all(board[j][j] == O for j in range(3)) or \
-            all(board[i][2-j] == X for j in range(3)) or \
-            all(board[i][2-j] == O for j in range(3)):
+            all(board[j][2-j] == X for j in range(3)) or \
+            all(board[j][2-j] == O for j in range(3)):
             return True
     
     # Cases where its a tie
@@ -135,4 +135,32 @@ def minimax(board):
     Returns the optimal action for the current player on the board.
     """
     # player, actions, result, winner, terminal, utility
-    raise NotImplementedError
+    # X plays max, O plays min
+
+    # temp
+    if board == initial_state():
+        return (0,1)
+
+    # init variables
+    scores = []
+    p = player(board)
+    a = list(actions(board))
+
+    # check if board is terminal
+    if terminal(board):
+        return None
+    
+    # create minimax game tree
+    for i in a:
+        res = result(board, i) # res is board
+        m = minimax(res) # m is action
+        if m is None:
+            scores.append(utility(res))
+        else:
+            scores.append(utility(res) + utility(result(res, m)))
+    
+    # returns best action
+    if p == X and max(scores) > -1:
+        return a[scores.index(max(scores))]
+    else:
+        return a[scores.index(min(scores))]
