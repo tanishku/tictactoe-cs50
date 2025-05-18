@@ -23,6 +23,9 @@ def player(board):
     """
     Returns player who has the next turn on a board.
     """
+    if terminal(board):
+        return None
+
     x, o = 0, 0
     for i in board:
         for j in i:
@@ -46,6 +49,9 @@ def actions(board):
     """
     Returns set of all possible actions (i, j) available on the board.
     """
+    if terminal(board):
+        return (1,1)
+    
     s = set()
     for i in range(3):
         for j in range(3):
@@ -61,7 +67,10 @@ def result(board, action):
     b = copy.deepcopy(board)
     
     # Catch Illegal Move
+    #print(action)
     if b[action[0]][action[1]] != EMPTY:
+        raise Exception('Illegal Move')
+    elif (action[0] not in [0, 1, 2]) or (action[1] not in [0, 1, 2]):
         raise Exception('Illegal Move')
     
     b[action[0]][action[1]] = player(board)
@@ -72,21 +81,25 @@ def winner(board):
     """
     Returns the winner of the game, if there is one.
     """
+    # game is in progress
     if not terminal(board):
         return None
     
     for i in range(3):
+        # if X won
         if all(board[i][j] == X for j in range(3)) or \
             all(board[j][i] == X for j in range(3)) or \
             all(board[j][j] == X for j in range(3)) or \
             all(board[j][2-j] == X for j in range(3)):
             return X
+        # if O won
         elif all(board[i][j] == O for j in range(3)) or \
             all(board[j][i] == O for j in range(3)) or \
             all(board[j][j] == O for j in range(3)) or \
             all(board[j][2-j] == O for j in range(3)):
             return O
     
+    # if game has terminated
     return None
 
 
@@ -133,34 +146,86 @@ def utility(board):
 def minimax(board):
     """
     Returns the optimal action for the current player on the board.
+    
+    Available Functions:
+    initial_state(): returns initial state
+    player(board): returns which player plays next
+    actions(board): returns all actions in (i, j) format
+    result(board, action): returns resultant board
+    winner: returns winner player | 
+    terminal(board): tells if game has ended
+    utility(board): 1 if X win, -1 if O won, 0 otherwise | assumes terminated
+
+    returns None if terminal board
+    
+    X is the Maximizing player
+    O is the Minimizing player
     """
-    # player, actions, result, winner, terminal, utility
-    # X plays max, O plays min
 
-    # temp
-    # if board == initial_state():
-    #     return (0,1)
-
-    # init variables
-    scores = []
-    p = player(board)
-    a = list(actions(board))
-
-    # check if board is terminal
-    if terminal(board):
-        return None
-    
-    # create minimax game tree
-    for i in a:
-        res = result(board, i) # res is board
-        m = minimax(res) # m is action
-        if m is None:
-            scores.append(utility(res))
-        else:
-            scores.append(utility(res) + utility(result(res, m)))
-    
-    # returns best action
-    if p == X and max(scores) > -1:
-        return a[scores.index(max(scores))]
+    # Maximizing Player
+    if player(board) == X:
+        score = []
+        for action in actions(board):
+            res = result(board, action)
+            u = utility(res)
+            if terminal(res):
+                if u == 1:
+                    return action
+                else:
+                    score.append((u, action))
+            else:
+                u = uminimax(res)
+                score.append((u, action))
+        return max(score, key=lambda x: x[0])[1]
+    # Minimizing Player
+    elif player(board) == O:
+        score = []
+        for action in actions(board):
+            res = result(board, action)
+            u = utility(res)
+            if terminal(res):
+                if u == -1:
+                    return action
+                else:
+                    score.append((u, action))
+            else:
+                u = uminimax(res)
+                score.append((u, action))
+        return min(score, key=lambda x: x[0])[1]
     else:
-        return a[scores.index(min(scores))]
+        return None
+
+
+def uminimax(board):
+    # Maximizing Player
+    if player(board) == X:
+        score = []
+        for action in actions(board):
+            res = result(board, action)
+            if terminal(res):
+                u = utility(res)
+                if u == 1:
+                    return u
+                else:
+                    score.append(u)
+            else:
+                u = uminimax(res)
+                score.append(u)
+        return max(score)
+    # Minimizing Player
+    elif player(board) == O:
+        score = []
+        for action in actions(board):
+            res = result(board, action)
+            if terminal(res):
+                u = utility(res)
+                if u == -1:
+                    return u
+                else:
+                    score.append(u)
+            else:
+                u = uminimax(res)
+                score.append(u)
+        return min(score)
+    else:
+        return 0
